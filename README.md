@@ -1,120 +1,141 @@
-# 🚀 **Training Pipeline — MLOps Machine Maintenance**
+# 🐳☸️ Dockerfile & Kubernetes Manifests — Setup Stage
 
-This branch advances the **MLOps Machine Maintenance** project by introducing the **`training_pipeline.py`** module inside the `pipeline/` directory.
-It represents the **third executable workflow stage** of the project — combining **data preprocessing** and **model training** into a single, fully automated pipeline.
+This stage adds the **Dockerfile** and **Kubernetes manifests** required to containerise and deploy the **Flask application** for the **MLOps Machine Maintenance** project.
+It focuses on **setting up** the container and Kubernetes configuration — preparing the groundwork for deployment, without yet deploying or integrating CI/CD.
 
-The training pipeline enables **end-to-end execution** of the machine learning workflow: from raw sensor data ingestion to model evaluation and persistence — all within one streamlined script.
+## 🧩 Overview
 
-## 🧩 **Overview**
+At this stage, the project gains:
 
-The `training_pipeline.py` file orchestrates the project’s two key stages:
+| Component                        | Purpose                                                              |
+| -------------------------------- | -------------------------------------------------------------------- |
+| 🐳 **Dockerfile**                | Defines how to build and run the Flask app as a container            |
+| ☸️ **manifests/deployment.yaml** | Describes the Kubernetes Deployment (pods, replicas, container spec) |
+| 🌐 **manifests/service.yaml**    | Exposes the Flask app through a LoadBalancer for external access     |
 
-1️⃣ **Data Processing** — loads raw data, performs cleaning, encoding, scaling, and saves train/test splits.
-2️⃣ **Model Training** — loads processed data, trains a Logistic Regression model, evaluates it, and saves the trained model to disk.
+These files make the application portable, reproducible, and ready for cloud or local Kubernetes clusters (e.g., Minikube, GKE, or Docker Desktop).
 
-Both stages are powered by the core modules in `src/`:
+## ⚙️ **Dockerfile Summary**
 
-* `data_processing.py`
-* `model_training.py`
-* `logger.py`
-* `custom_exception.py`
+The `Dockerfile` creates a lightweight Python 3.12 container that:
 
-This structure ensures that the workflow remains **reproducible**, **traceable**, and ready for **CI/CD integration**.
+1. Copies all project files into `/app`
+2. Installs dependencies in editable mode (`pip install -e .`)
+3. Exposes port **5000**
+4. Launches the Flask app using `CMD ["python", "app.py"]`
 
-## 🔧 **Core Responsibilities**
+### Example Build & Run (Local)
 
-| Stage | Operation              | Description                                                                                                          |
-| ----: | ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
-|   1️⃣ | **Data Preprocessing** | Loads `data.csv`, cleans data, encodes categorical columns, standardises features, and saves processed artefacts.    |
-|   2️⃣ | **Model Training**     | Loads processed data, trains a Logistic Regression model, saves it as `model.pkl`, and logs key performance metrics. |
+```bash
+# Build container
+docker build -t mlops-machine-maintenance:latest .
+
+# Run locally
+docker run -p 5000:5000 mlops-machine-maintenance:latest
+```
+
+Then open **[http://localhost:5000](http://localhost:5000)** in your browser.
+
+## ☸️ **Kubernetes Manifests Summary**
+
+The `manifests/` folder contains two YAML files that define how the Flask container is deployed and accessed within Kubernetes.
+
+### `deployment.yaml`
+
+Creates a **Deployment** named `mlops-machine-maintenance`:
+
+* Runs **2 replicas** for basic availability
+* Uses the image from:
+
+  ```
+  us-central1-docker.pkg.dev/sacred-garden-474511-b9/mlops-machine-maintenance/mlops-machine-maintenance:latest
+  ```
+* Exposes container port **5000**
+* Requests minimal resources (`250m` CPU, `256Mi` memory)
+
+### `service.yaml`
+
+Defines a **Service** named `mlops-service`:
+
+* Selects pods with `app: mlops-machine-maintenance`
+* Type: **LoadBalancer**
+* Maps external port **80** to internal port **5000**
+
+### Apply the Manifests
+
+```bash
+kubectl apply -f manifests/
+```
+
+Then verify:
+
+```bash
+kubectl get deployments
+kubectl get pods
+kubectl get svc
+```
+
+If no external IP is available, use:
+
+```bash
+kubectl port-forward svc/mlops-service 8080:80
+```
+
+Access the app at **[http://localhost:8080](http://localhost:8080)**
 
 ## 🗂️ **Updated Project Structure**
 
 ```text
 mlops_machine_maintenance/
-├── .venv/                           # 🧩 Local virtual environment (created by uv)
+├── .venv/                            # 🧩 Local virtual environment
 ├── artifacts/
 │   ├── raw/
-│   │   └── data.csv                 # ⚙️ Raw machine sensor dataset
-│   ├── processed/                   # 💾 Processed data artefacts (train/test splits, scaler)
+│   │   └── data.csv                  # ⚙️ Raw machine sensor dataset
+│   ├── processed/                    # 💾 Processed data and scaler
 │   │   ├── X_train.pkl
 │   │   ├── X_test.pkl
 │   │   ├── y_train.pkl
 │   │   ├── y_test.pkl
 │   │   └── scaler.pkl
-│   └── models/                      # 🧠 Trained model artefacts
+│   └── models/                       # 🧠 Trained model artefacts
 │       └── model.pkl
-├── pipeline/                        # ⚙️ Workflow orchestration layer
-│   └── training_pipeline.py          # 🚀 End-to-end pipeline (data processing → model training)
-├── src/
+├── manifests/                        # ☸️ Kubernetes configuration files
+│   ├── deployment.yaml               # Defines pods, replicas, and container spec
+│   └── service.yaml                  # LoadBalancer service exposing the app
+├── pipeline/                         # ⚙️ Workflow orchestration
+│   └── training_pipeline.py          # End-to-end data processing + model training
+├── src/                              # 🧠 Core Python modules
 │   ├── __init__.py
-│   ├── custom_exception.py          # Unified and detailed exception handling
-│   ├── logger.py                    # Centralised logging configuration
-│   ├── data_processing.py           # 🧩 Data preprocessing, scaling & splitting
-│   └── model_training.py            # ⚙️ Model training, evaluation, and persistence
-├── static/                          # 📊 Visual or diagnostic assets
-├── templates/                       # 🧩 Placeholder for web/API templates
-├── .gitignore                       # 🚫 Git ignore rules
-├── .python-version                  # 🐍 Python version pin
-├── pyproject.toml                   # ⚙️ Project metadata and uv configuration
-├── requirements.txt                 # 📦 Python dependencies
-├── setup.py                         # 🔧 Editable install support
-└── uv.lock                          # 🔒 Locked dependency versions
+│   ├── custom_exception.py           # Unified error handling
+│   ├── logger.py                     # Centralised logging configuration
+│   ├── data_processing.py            # Preprocessing and scaling
+│   └── model_training.py             # Model training and evaluation
+├── static/                           # 🌈 Front-end styling and assets
+│   ├── style.css
+│   └── img/
+├── templates/                        # 🧩 HTML templates for Flask
+│   └── index.html
+├── img/
+│   └── flask/
+├── app.py                            # 🌐 Flask app for prediction interface
+├── Dockerfile                        # 🐳 Container build file
+├── .gitignore                        # 🚫 Ignore rules for Git
+├── .python-version                   # 🐍 Python version pin
+├── pyproject.toml                    # ⚙️ Project metadata
+├── requirements.txt                  # 📦 Python dependencies
+├── setup.py                          # 🔧 Editable install support
+└── uv.lock                           # 🔒 Locked dependency versions
 ```
 
-## ⚙️ **How to Run the Training Pipeline**
+## ✅ **Expected Outcome**
 
-After ensuring your raw dataset is available at `artifacts/raw/data.csv`, run the entire workflow with a single command:
+After this stage:
 
-```bash
-python pipeline/training_pipeline.py
-```
+* The **Dockerfile** correctly builds and runs the Flask app in a container.
+* The **Kubernetes manifests** define a consistent, deployable setup.
+* The project is now **deployment-ready**, with infrastructure configuration stored under `manifests/`.
 
-### ✅ **Expected Successful Output**
+## 🔎 Notes
 
-```console
-2025-11-08 14:30:51,105 - INFO - Data processing initialised.
-2025-11-08 14:30:51,432 - INFO - Basic data preprocessing completed.
-2025-11-08 14:30:51,879 - INFO - Train/test splits and scaler saved successfully.
-2025-11-08 14:30:52,210 - INFO - Model training initialised.
-2025-11-08 14:30:52,622 - INFO - Model trained and saved successfully.
-2025-11-08 14:30:53,002 - INFO - Accuracy : 0.85 ; Precision : 0.84 ; Recall : 0.85 ; F1 : 0.84
-2025-11-08 14:30:53,145 - INFO - End-to-end training pipeline executed successfully.
-```
-
-This confirms that:
-
-* The preprocessing and model training stages were executed sequentially.
-* Artefacts were successfully written to `artifacts/processed/` and `artifacts/models/`.
-* Evaluation metrics were logged for performance tracking.
-
-## 🧠 **Implementation Highlights**
-
-* **End-to-End Automation**
-  Runs both preprocessing and model training in one script, simplifying experimentation and integration with CI/CD tools.
-
-* **Integrated Logging** via `src/logger.py`
-  Captures timestamped logs for every major step, creating a full audit trail for debugging and reproducibility.
-
-* **Unified Error Handling** via `src/custom_exception.py`
-  Standardises error messages and traceback details for clear, contextual debugging.
-
-* **Production-Ready Architecture**
-  The pipeline structure mirrors real-world MLOps patterns — modular, version-controlled, and scalable for future extensions.
-
-## 🧩 **Integration Guidelines**
-
-| File                            | Purpose                                                           |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `pipeline/training_pipeline.py` | Orchestrates the full ML workflow from preprocessing to training. |
-| `src/data_processing.py`        | Handles data cleaning, encoding, scaling, and persistence.        |
-| `src/model_training.py`         | Performs model training, saving, and evaluation.                  |
-| `src/logger.py`                 | Centralises logging across the pipeline.                          |
-| `src/custom_exception.py`       | Provides structured, traceable error handling.                    |
-
-## ✅ **In Summary**
-
-This stage transforms the **MLOps Machine Maintenance** project into a **complete, end-to-end machine learning workflow**.
-With a single command, the `training_pipeline.py` script orchestrates data preprocessing, model training, and evaluation — producing reproducible artefacts and detailed logs.
-
-It lays the groundwork for **CI/CD automation**, **Kubeflow pipeline integration**, and **scalable model retraining workflows** in future stages of the project.
+* This stage focuses solely on **setting up** the containerisation and Kubernetes configuration — no CI/CD or deployment automation is included yet.
+* You can later expand this to integrate with **GitHub Actions**, **GKE**, or **Kubeflow** for full production automation.
