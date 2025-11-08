@@ -138,4 +138,4 @@ After this stage:
 ## 🔎 Notes
 
 * This stage focuses solely on **setting up** the containerisation and Kubernetes configuration — no CI/CD or deployment automation is included yet.
-* You can later expand this to integrate with **GitHub Actions**, **GKE**, or **Kubeflow** for full production automation.
+* You can later expand this to integrate with **GitHub Actions**, **GKE**, or **Kubeflow** for full production automation. 
