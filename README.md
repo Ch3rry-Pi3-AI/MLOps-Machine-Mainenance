@@ -24,7 +24,7 @@ Once completed, you’ll have a fully functional VM capable of running and build
 Use the following setup:
 
 <p align="center">
-  <img src="img/gcp_vm/machine_config.png" alt="GCP Machine Configuration" width="80%">
+  <img src="img/gcp_vm/machine_config.png" alt="GCP Machine Configuration" width="100%">
 </p>
 
 ### OS and Storage
@@ -32,7 +32,7 @@ Use the following setup:
 Under **OS and storage**, click **Change**, and select:
 
 <p align="center">
-  <img src="img/gcp_vm/os_storage.png" alt="GCP OS and Storage Configuration" width="80%">
+  <img src="img/gcp_vm/os_storage.png" alt="GCP OS and Storage Configuration" width="100%">
 </p>
 
 
@@ -41,7 +41,7 @@ Under **OS and storage**, click **Change**, and select:
 Open the **Networking** section and set it up as follows:
 
 <p align="center">
-  <img src="img/gcp_vm/networking.png" alt="GCP Networking Configuration" width="80%">
+  <img src="img/gcp_vm/networking.png" alt="GCP Networking Configuration" width="100%">
 </p>
 
 
@@ -186,7 +186,7 @@ docker ps -a
 If everything is set up correctly, you should see:
 
 <p align="center">
-  <img src="img/gcp_vm/docker_installed_confirm.png" alt="Docker Installation Confirmed" width="80%">
+  <img src="img/gcp_vm/docker_installed_confirm.png" alt="Docker Installation Confirmed" width="100%">
 </p>
 
 
